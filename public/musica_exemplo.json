@@ -1,11 +1,19 @@
 [
   {
     "notas": ["C4", "E4", "G4"],
-    "duracaoNota": 0.5,
-    "multiplicadorTempo": 4
+    "tempoEntreNotas": 4
   },
   {
     "notas": ["C4"]
+  },
+  {
+    "notas": ["D4"]
+  },
+  {
+    "notas": ["E4"]
+  },
+  {
+    "notas": ["F4"]
   },
   {
     "notas": ["D4"]

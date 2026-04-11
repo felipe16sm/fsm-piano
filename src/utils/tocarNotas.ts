@@ -12,7 +12,7 @@ const sampler = new Tone.Sampler({
   baseUrl: "https://tonejs.github.io/audio/salamander/",
 }).toDestination();
 
-const tocarNotas = (notas: any, tempo: any) => {
+const tocarNotas = (notas: any, tempo: any = 1) => {
   Tone.loaded().then(() => {
     sampler.triggerAttackRelease(notas, tempo);
   });
