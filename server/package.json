@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev":"bun src/server.ts"
+    "dev": "bun src/server.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -17,6 +17,7 @@
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
     "mongodb": "^7.1.1"
   }
 }
