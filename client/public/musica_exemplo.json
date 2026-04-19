@@ -1,0 +1,97 @@
+[
+  {
+    "notas": ["C4", "E4", "G4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["C4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["D4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["E4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["F4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["D4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["E4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["F4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["G4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["A4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["B4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["C5"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["B4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["A4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["G4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["F4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["E4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["D4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  },
+  {
+    "notas": ["C4"],
+    "duracaoNotas": 1,
+    "tempoEntreNotas": 200
+  }
+]
