@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -23,25 +22,161 @@ import {
   EditOutlined,
   SaveOutlined,
   UnorderedListOutlined,
+  HolderOutlined,
 } from "@ant-design/icons";
 import FSMImg from "../../assets/FSMpiano_transparent.png";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { COMMON_CHORDS } from "../../lib/chords";
 import { useCreateMusic } from "../../hooks";
 import tocarMusica from "../../utils/tocarMusica";
 
 const { Title, Text } = Typography;
 
-const NOTAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const OITAVAS = [2, 3, 4, 5, 6, 7];
+const NOTAS_NATURAIS = ["C", "D", "E", "F", "G", "A", "B"];
+const NOTAS_SUSTENIDOS = ["C#", "D#", "F#", "G#", "A#"];
+const OITAVAS = [1, 2, 3, 4, 5, 6, 7, 8];
 
+const NOTAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const notaOptions = OITAVAS.flatMap((o) =>
   NOTAS.map((n) => ({ label: `${n}${o}`, value: `${n}${o}` })),
 );
 
+type EntryWithId = NotaEntry & { __id: string };
+
+interface SortableRowProps {
+  id: string;
+  entry: EntryWithId;
+  index: number;
+  total: number;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onDuplicate: () => void;
+  onEdit: () => void;
+  onRemove: () => void;
+  isSharp: (n: string) => boolean;
+}
+
+const SortableRow = ({
+  id,
+  entry,
+  index,
+  total,
+  onMoveUp,
+  onMoveDown,
+  onDuplicate,
+  onEdit,
+  onRemove,
+  isSharp,
+}: SortableRowProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    background: isDragging ? "hsl(var(--muted))" : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <List.Item
+        actions={[
+          <Button
+            key="up"
+            size="small"
+            icon={<ArrowUpOutlined />}
+            disabled={index === 0}
+            onClick={onMoveUp}
+          />,
+          <Button
+            key="down"
+            size="small"
+            icon={<ArrowDownOutlined />}
+            disabled={index === total - 1}
+            onClick={onMoveDown}
+          />,
+          <Button
+            key="copy"
+            size="small"
+            icon={<CopyOutlined />}
+            onClick={onDuplicate}
+            title="Duplicar nota"
+          />,
+          <Button
+            key="edit"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={onEdit}
+          />,
+          <Button
+            key="del"
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={onRemove}
+          />,
+        ]}
+      >
+        <Space wrap>
+          <Button
+            type="text"
+            size="small"
+            icon={<HolderOutlined />}
+            style={{ cursor: "grab", touchAction: "none" }}
+            {...attributes}
+            {...listeners}
+            title="Arrastar para reordenar"
+          />
+          <Typography.Text strong style={{ minWidth: 30 }}>
+            #{index + 1}
+          </Typography.Text>
+          {entry.notas.map((n) => (
+            <Tag key={n} color={isSharp(n) ? "volcano" : "blue"}>
+              {n}
+            </Tag>
+          ))}
+          <Tag color="green">dur: {entry.duracaoNotas}</Tag>
+          <Tag color="gold">{entry.tempoEntreNotas}ms</Tag>
+        </Space>
+      </List.Item>
+    </div>
+  );
+};
+
 const PianoSequencer = () => {
   const navigate = useNavigate();
-  const [entries, setEntries] = useState<NotaEntry[]>([]);
+  const idCounter = useRef(0);
+  const makeId = () => `e${++idCounter.current}_${Date.now()}`;
+  const withId = (e: NotaEntry): EntryWithId => ({ ...e, __id: makeId() });
+  // const stripIds = (arr: EntryWithId[]): NotaEntry[] =>
+  //   arr.map(({ __id, ...rest }) => rest);
+
+  const [entries, setEntries] = useState<EntryWithId[]>([]);
   const [selectedNotas, setSelectedNotas] = useState<string[]>([]);
+  const [oitava, setOitava] = useState<number>(4);
+  const [oitavaAcorde, setOitavaAcorde] = useState<number>(4);
   const [duracaoNotas, setDuracaoNotas] = useState<number>(1);
   const [tempoEntreNotas, setTempoEntreNotas] = useState<number>(200);
 
@@ -66,7 +201,7 @@ const PianoSequencer = () => {
     try {
       const data = JSON.parse(raw) as { name: string; sequence: NotaEntry[] };
       if (Array.isArray(data.sequence)) {
-        setEntries(data.sequence);
+        setEntries(data.sequence.map(withId));
         message.success(`Música "${data.name}" carregada!`);
       }
     } catch {
@@ -92,6 +227,7 @@ const PianoSequencer = () => {
     }
     const copy = [...entries];
     copy[editIndex] = {
+      ...copy[editIndex],
       notas: [...editNotas],
       duracaoNotas: editDuracao,
       tempoEntreNotas: editTempo,
@@ -108,15 +244,33 @@ const PianoSequencer = () => {
     }
     setEntries([
       ...entries,
-      { notas: [...selectedNotas], duracaoNotas, tempoEntreNotas },
+      withId({ notas: [...selectedNotas], duracaoNotas, tempoEntreNotas }),
     ]);
     setSelectedNotas([]);
   };
 
+  const toggleNota = (nota: string) => {
+    const full = `${nota}${oitava}`;
+    setSelectedNotas((prev) =>
+      prev.includes(full) ? prev.filter((n) => n !== full) : [...prev, full],
+    );
+  };
+
+  const isNotaSelected = (nota: string) =>
+    selectedNotas.includes(`${nota}${oitava}`);
+
   const addChordPreset = (notas: string[]) => {
+    // Transpõe as notas (montadas com baseOctave=4 em chords.ts) para a oitava escolhida
+    const delta = oitavaAcorde - 4;
+    const transposed = notas.map((n) => {
+      const match = n.match(/^([A-G]#?)(\d+)$/);
+      if (!match) return n;
+      const [, name, oct] = match;
+      return `${name}${parseInt(oct, 10) + delta}`;
+    });
     setEntries([
       ...entries,
-      { notas: [...notas], duracaoNotas, tempoEntreNotas },
+      withId({ notas: transposed, duracaoNotas, tempoEntreNotas }),
     ]);
     message.success("Acorde adicionado!");
   };
@@ -128,7 +282,15 @@ const PianoSequencer = () => {
   const duplicateEntry = (index: number) => {
     const entry = entries[index];
     const copy = [...entries];
-    copy.splice(index + 1, 0, { ...entry, notas: [...entry.notas] });
+    copy.splice(
+      index + 1,
+      0,
+      withId({
+        notas: [...entry.notas],
+        duracaoNotas: entry.duracaoNotas,
+        tempoEntreNotas: entry.tempoEntreNotas,
+      }),
+    );
     setEntries(copy);
     message.success("Nota duplicada!");
   };
@@ -182,6 +344,22 @@ const PianoSequencer = () => {
     }
   }, [isErrorCreateMusic]);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = entries.findIndex((e) => e.__id === active.id);
+    const newIndex = entries.findIndex((e) => e.__id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    setEntries(arrayMove(entries, oldIndex, newIndex));
+  };
+
   return (
     <div style={{ maxWidth: 800, margin: "0 auto" }}>
       <div
@@ -226,35 +404,103 @@ const PianoSequencer = () => {
       </div>
 
       <Card title="Acordes Rápidos" style={{ marginBottom: 24 }}>
-        <Space wrap>
-          {COMMON_CHORDS.map((c) => (
-            <Button key={c.label} onClick={() => addChordPreset(c.notas)}>
-              {c.label}
-            </Button>
-          ))}
-        </Space>
-        <div style={{ marginTop: 8 }}>
+        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <div>
+            <Text strong>Oitava:</Text>
+            <Select
+              style={{ width: 120, display: "block", marginTop: 4 }}
+              value={oitavaAcorde}
+              onChange={setOitavaAcorde}
+              options={OITAVAS.map((o) => ({ label: `Oitava ${o}`, value: o }))}
+            />
+          </div>
+          <Space wrap>
+            {COMMON_CHORDS.map((c) => (
+              <Button key={c.label} onClick={() => addChordPreset(c.notas)}>
+                {c.label}
+              </Button>
+            ))}
+          </Space>
           <Text type="secondary">
             Usa a duração e o tempo entre notas atuais.
           </Text>
-        </div>
+        </Space>
       </Card>
 
       <Card title="Adicionar Nota / Acorde" style={{ marginBottom: 24 }}>
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
           <div>
-            <Text strong>Notas:</Text>
+            <Text strong>Oitava:</Text>
             <Select
-              mode="multiple"
-              style={{ width: "100%", marginTop: 4 }}
-              placeholder="Selecione as notas (ex: C4, E4, G4)"
-              value={selectedNotas}
-              onChange={setSelectedNotas}
-              options={notaOptions}
-              optionFilterProp="label"
-              showSearch
+              style={{ width: 100, display: "block", marginTop: 4 }}
+              value={oitava}
+              onChange={setOitava}
+              options={OITAVAS.map((o) => ({ label: `Oitava ${o}`, value: o }))}
             />
           </div>
+
+          <div>
+            <Text strong>Notas naturais:</Text>
+            <div style={{ marginTop: 8 }}>
+              <Space wrap>
+                {NOTAS_NATURAIS.map((n) => (
+                  <Button
+                    key={n}
+                    type={isNotaSelected(n) ? "primary" : "default"}
+                    onClick={() => toggleNota(n)}
+                  >
+                    {n}
+                    {oitava}
+                  </Button>
+                ))}
+              </Space>
+            </div>
+          </div>
+
+          <div>
+            <Text strong>Sustenidos:</Text>
+            <div style={{ marginTop: 8 }}>
+              <Space wrap>
+                {NOTAS_SUSTENIDOS.map((n) => (
+                  <Button
+                    key={n}
+                    type={isNotaSelected(n) ? "primary" : "default"}
+                    danger={isNotaSelected(n)}
+                    onClick={() => toggleNota(n)}
+                  >
+                    {n}
+                    {oitava}
+                  </Button>
+                ))}
+              </Space>
+            </div>
+          </div>
+
+          {selectedNotas.length > 0 && (
+            <div>
+              <Text strong>Selecionadas:</Text>
+              <div style={{ marginTop: 8 }}>
+                <Space wrap>
+                  {selectedNotas.map((n) => (
+                    <Tag
+                      key={n}
+                      color={n.includes("#") ? "volcano" : "blue"}
+                      closable
+                      onClose={() =>
+                        setSelectedNotas(selectedNotas.filter((x) => x !== n))
+                      }
+                    >
+                      {n}
+                    </Tag>
+                  ))}
+                  <Button size="small" onClick={() => setSelectedNotas([])}>
+                    Limpar
+                  </Button>
+                </Space>
+              </div>
+            </div>
+          )}
+
           <Space wrap>
             <div>
               <Text strong>Duração da nota:</Text>
@@ -333,62 +579,35 @@ const PianoSequencer = () => {
         {entries.length === 0 ? (
           <Text type="secondary">Nenhuma nota adicionada ainda.</Text>
         ) : (
-          <List
-            dataSource={entries}
-            renderItem={(entry, index) => (
-              <List.Item
-                actions={[
-                  <Button
-                    key="up"
-                    size="small"
-                    icon={<ArrowUpOutlined />}
-                    disabled={index === 0}
-                    onClick={() => moveEntry(index, -1)}
-                  />,
-                  <Button
-                    key="down"
-                    size="small"
-                    icon={<ArrowDownOutlined />}
-                    disabled={index === entries.length - 1}
-                    onClick={() => moveEntry(index, 1)}
-                  />,
-                  <Button
-                    key="copy"
-                    size="small"
-                    icon={<CopyOutlined />}
-                    onClick={() => duplicateEntry(index)}
-                    title="Duplicar nota"
-                  />,
-                  <Button
-                    key="edit"
-                    size="small"
-                    icon={<EditOutlined />}
-                    onClick={() => openEdit(index)}
-                  />,
-                  <Button
-                    key="del"
-                    size="small"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => removeEntry(index)}
-                  />,
-                ]}
-              >
-                <Space wrap>
-                  <Text strong style={{ minWidth: 30 }}>
-                    #{index + 1}
-                  </Text>
-                  {entry.notas.map((n) => (
-                    <Tag key={n} color={isSharp(n) ? "volcano" : "blue"}>
-                      {n}
-                    </Tag>
-                  ))}
-                  <Tag color="green">dur: {entry.duracaoNotas}</Tag>
-                  <Tag color="gold">{entry.tempoEntreNotas}ms</Tag>
-                </Space>
-              </List.Item>
-            )}
-          />
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={entries.map((e) => e.__id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <List
+                dataSource={entries}
+                rowKey={(item) => item.__id}
+                renderItem={(entry, index) => (
+                  <SortableRow
+                    id={entry.__id}
+                    entry={entry}
+                    index={index}
+                    total={entries.length}
+                    onMoveUp={() => moveEntry(index, -1)}
+                    onMoveDown={() => moveEntry(index, 1)}
+                    onDuplicate={() => duplicateEntry(index)}
+                    onEdit={() => openEdit(index)}
+                    onRemove={() => removeEntry(index)}
+                    isSharp={isSharp}
+                  />
+                )}
+              />
+            </SortableContext>
+          </DndContext>
         )}
       </Card>
 
