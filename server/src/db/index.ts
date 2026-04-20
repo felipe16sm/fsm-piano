@@ -1,12 +1,4 @@
-import { MongoClient } from "mongodb";
+import { mongoDB } from "./mongoDB";
+import { sqLiteDB } from "./sqLite";
 
-const uri = process.env.MONGO_URI || "mongodb://localhost:27017";
-
-const client = new MongoClient(uri);
-
-export const db = client.db("music_db");
-
-export async function connectDB() {
-  await client.connect();
-  console.log("MongoDB conectado");
-}
+export { mongoDB, sqLiteDB };

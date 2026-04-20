@@ -25,7 +25,7 @@ import {
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import { COMMON_CHORDS } from "../../lib/chords";
-import { useMusic } from "../../hooks";
+import { useGetOneMusic, useUpdateMusic } from "../../hooks";
 import tocarMusica from "../../utils/tocarMusica";
 
 const { Title, Text } = Typography;
@@ -53,20 +53,20 @@ const EditarMusica = () => {
   const [editNotas, setEditNotas] = useState<string[]>([]);
   const [editDuracao, setEditDuracao] = useState<number>(1);
   const [editTempo, setEditTempo] = useState<number>(200);
-  const { getOneMusic, updateMusic } = useMusic({ id });
+  
   const {
     data: getOneMusicData,
     isSuccess: isSuccessGetOneMusic,
     isPending: isPendingGetOneMusic,
     isError: isErrorGetOneMusic,
-  } = getOneMusic;
+  } = useGetOneMusic({ id });
 
   const {
     mutate: mutateUpdateMusic,
     isSuccess: isSuccessUpdateMusic,
     isPending: isPendingUpdateMusic,
     isError: isErrorUpdateMusic,
-  } = updateMusic;
+  } = useUpdateMusic({ id });
 
   useEffect(() => {
     (() => {

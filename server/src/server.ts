@@ -4,11 +4,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import rateLimit from "express-rate-limit";
 
-import { connectDB } from "./db";
 import musicRoutes from "./routes";
 
 const limiter = rateLimit({
-  windowMs: 2 * 60 * 1000, // 15 min
+  windowMs: 2 * 60 * 1000,
   max: 30,
 
   handler: (req: any, res: any) => {
@@ -40,8 +39,6 @@ app.use(express.static(frontendPath));
 app.get("/{*any}", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
-
-await connectDB();
 
 app.listen(3000, () => {
   console.log("🚀 Server rodando em http://localhost:3000");

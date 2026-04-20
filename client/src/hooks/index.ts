@@ -1,3 +1,15 @@
-import useMusic from "./useMusic";
+import {
+  useCreateMusic,
+  useDeleteMusic,
+  useGetMusics,
+  useGetOneMusic,
+  useUpdateMusic,
+} from "./musics";
 
-export { useMusic };
+export {
+  useCreateMusic,
+  useDeleteMusic,
+  useGetMusics,
+  useGetOneMusic,
+  useUpdateMusic,
+};

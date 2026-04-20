@@ -20,7 +20,7 @@ import {
   ReloadOutlined,
   PlayCircleOutlined,
 } from "@ant-design/icons";
-import { useMusic } from "../../hooks";
+import { useGetMusics, useDeleteMusic } from "../../hooks";
 
 const { Title, Text } = Typography;
 
@@ -28,17 +28,16 @@ const Musicas = () => {
   const navigate = useNavigate();
   const [musics, setMusics] = useState<Music[]>([]);
   const [loading, setLoading] = useState(false);
-  const { getMusics, deleteMusic } = useMusic({});
   const {
     data: getMusicsData,
     isSuccess: isSuccessGetMusics,
     isError: isErrorGetMusics,
     isPending: isPendingGetMusics,
     refetch: refetchGetMusics,
-  } = getMusics;
+  } = useGetMusics();
 
   const { mutate: mutateDeleteMusic, isSuccess: isSuccessDeleteMusic } =
-    deleteMusic;
+    useDeleteMusic();
 
   const handleDelete = async (id: string) => {
     mutateDeleteMusic({ id });
@@ -55,6 +54,8 @@ const Musicas = () => {
   };
 
   useEffect(() => {
+    console.log(isSuccessGetMusics)
+    console.log(getMusicsData)
     if (isSuccessGetMusics && getMusicsData) {
       setMusics(() => getMusicsData);
     }
@@ -155,7 +156,7 @@ const Musicas = () => {
                       {m.name}
                     </Text>
                     <Space wrap>
-                      <Tag color="blue">{m.sequence.length} notas</Tag>
+                      <Tag color="blue">{m.sequence?.length} notas</Tag>
                       <Text type="secondary">id: {m._id}</Text>
                     </Space>
                   </Space>

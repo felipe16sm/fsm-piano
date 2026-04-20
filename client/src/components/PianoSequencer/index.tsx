@@ -26,7 +26,7 @@ import {
 } from "@ant-design/icons";
 import FSMImg from "../../assets/FSMpiano_transparent.png";
 import { COMMON_CHORDS } from "../../lib/chords";
-import { useMusic } from "../../hooks";
+import { useCreateMusic } from "../../hooks";
 import tocarMusica from "../../utils/tocarMusica";
 
 const { Title, Text } = Typography;
@@ -53,13 +53,12 @@ const PianoSequencer = () => {
   const [editNotas, setEditNotas] = useState<string[]>([]);
   const [editDuracao, setEditDuracao] = useState<number>(1);
   const [editTempo, setEditTempo] = useState<number>(200);
-  const { createMusic } = useMusic({});
   const {
     mutate: mutateCreateMusic,
     isSuccess: isSuccessCreateMusic,
     isError: isErrorCreateMusic,
     isPending: isPendingCreateMusic,
-  } = createMusic;
+  } = useCreateMusic();
 
   useEffect(() => {
     const raw = sessionStorage.getItem("selectedMusic");
@@ -166,12 +165,16 @@ const PianoSequencer = () => {
 
   useEffect(() => {
     if (isSuccessCreateMusic) {
-      message.success(`Música "${musicName.trim()}" salva!`);
       setSaveOpen(false);
       setMusicName("");
-      setEntries([]);
     }
-  }, [isSuccessCreateMusic, musicName]);
+  }, [isSuccessCreateMusic]);
+
+  useEffect(() => {
+    if (isSuccessCreateMusic && !saveOpen) {
+      message.success(`Música "${musicName.trim()}" salva!`);
+    }
+  }, [isSuccessCreateMusic, musicName, saveOpen]);
 
   useEffect(() => {
     if (isErrorCreateMusic) {
