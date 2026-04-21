@@ -17,8 +17,6 @@ import {
   PlusOutlined,
   DeleteOutlined,
   CopyOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
   EditOutlined,
   SaveOutlined,
   UnorderedListOutlined,
@@ -44,7 +42,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { COMMON_CHORDS } from "../../lib/chords";
 import { useCreateMusic } from "../../hooks";
-import tocarMusica from "../../utils/tocarMusica";
+import ButtonTocarMusica from "../ButtonTocarMusica";
 
 const { Title, Text } = Typography;
 
@@ -76,9 +74,6 @@ const SortableRow = ({
   id,
   entry,
   index,
-  total,
-  onMoveUp,
-  onMoveDown,
   onDuplicate,
   onEdit,
   onRemove,
@@ -103,20 +98,6 @@ const SortableRow = ({
     <div ref={setNodeRef} style={style}>
       <List.Item
         actions={[
-          <Button
-            key="up"
-            size="small"
-            icon={<ArrowUpOutlined />}
-            disabled={index === 0}
-            onClick={onMoveUp}
-          />,
-          <Button
-            key="down"
-            size="small"
-            icon={<ArrowDownOutlined />}
-            disabled={index === total - 1}
-            onClick={onMoveDown}
-          />,
           <Button
             key="copy"
             size="small"
@@ -181,6 +162,7 @@ const PianoSequencer = () => {
   const [tempoEntreNotas, setTempoEntreNotas] = useState<number>(200);
 
   const [saveOpen, setSaveOpen] = useState(false);
+  const [sequenceOpen, setSequenceOpen] = useState(false);
   const [musicName, setMusicName] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -195,6 +177,8 @@ const PianoSequencer = () => {
     isPending: isPendingCreateMusic,
   } = useCreateMusic();
 
+  const MESSAGE_DEFAULT_TIME = 2;
+
   useEffect(() => {
     const raw = sessionStorage.getItem("selectedMusic");
     if (!raw) return;
@@ -202,7 +186,10 @@ const PianoSequencer = () => {
       const data = JSON.parse(raw) as { name: string; sequence: NotaEntry[] };
       if (Array.isArray(data.sequence)) {
         setEntries(data.sequence.map(withId));
-        message.success(`Música "${data.name}" carregada!`);
+        message.success(
+          `Música "${data.name}" carregada!`,
+          MESSAGE_DEFAULT_TIME,
+        );
       }
     } catch {
       // ignore
@@ -222,7 +209,7 @@ const PianoSequencer = () => {
   const saveEdit = () => {
     if (editIndex === null) return;
     if (editNotas.length === 0) {
-      message.warning("Selecione pelo menos uma nota!");
+      message.warning("Selecione pelo menos uma nota!", MESSAGE_DEFAULT_TIME);
       return;
     }
     const copy = [...entries];
@@ -234,12 +221,12 @@ const PianoSequencer = () => {
     };
     setEntries(copy);
     setEditIndex(null);
-    message.success("Nota atualizada!");
+    message.success("Nota atualizada!", MESSAGE_DEFAULT_TIME);
   };
 
   const addEntry = () => {
     if (selectedNotas.length === 0) {
-      message.warning("Selecione pelo menos uma nota!");
+      message.warning("Selecione pelo menos uma nota!", MESSAGE_DEFAULT_TIME);
       return;
     }
 
@@ -248,7 +235,7 @@ const PianoSequencer = () => {
       withId({ notas: [...selectedNotas], duracaoNotas, tempoEntreNotas }),
     ]);
 
-    message.success("Nota ou acorde adicionado!");
+    message.success("Nota ou acorde adicionado!", MESSAGE_DEFAULT_TIME);
 
     setSelectedNotas([]);
   };
@@ -276,7 +263,7 @@ const PianoSequencer = () => {
       ...entries,
       withId({ notas: transposed, duracaoNotas, tempoEntreNotas }),
     ]);
-    message.success("Acorde adicionado!");
+    message.success("Acorde adicionado!", MESSAGE_DEFAULT_TIME);
   };
 
   const removeEntry = (index: number) => {
@@ -296,7 +283,7 @@ const PianoSequencer = () => {
       }),
     );
     setEntries(copy);
-    message.success("Nota duplicada!");
+    message.success("Nota duplicada!", MESSAGE_DEFAULT_TIME);
   };
 
   const moveEntry = (index: number, dir: -1 | 1) => {
@@ -309,7 +296,7 @@ const PianoSequencer = () => {
 
   const handleSave = async () => {
     if (!musicName.trim()) {
-      message.warning("Informe um nome para a música!");
+      message.warning("Informe um nome para a música!", MESSAGE_DEFAULT_TIME);
       return;
     }
 
@@ -332,19 +319,23 @@ const PianoSequencer = () => {
   useEffect(() => {
     if (isSuccessCreateMusic) {
       setSaveOpen(false);
-      setMusicName("");
+      setSequenceOpen(false);
     }
   }, [isSuccessCreateMusic]);
 
   useEffect(() => {
-    if (isSuccessCreateMusic && !saveOpen) {
-      message.success(`Música "${musicName.trim()}" salva!`);
+    if (isSuccessCreateMusic && !saveOpen && musicName) {
+      message.success(
+        `Música "${musicName.trim()}" salva!`,
+        MESSAGE_DEFAULT_TIME,
+      );
+      setMusicName("");
     }
   }, [isSuccessCreateMusic, musicName, saveOpen]);
 
   useEffect(() => {
     if (isErrorCreateMusic) {
-      message.error("Erro ao salvar música.");
+      message.error("Erro ao salvar música.", MESSAGE_DEFAULT_TIME);
     }
   }, [isErrorCreateMusic]);
 
@@ -372,35 +363,33 @@ const PianoSequencer = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 16,
+          marginBottom: 8,
         }}
       >
-        <Title
-          level={2}
+        <div
           style={{
             display: "flex",
             alignItems: "center",
             textAlign: "center",
-            marginBottom: 16,
           }}
         >
           <img
             src={FSMImg}
-            style={{ backgroundColor: "#e2e9e6ff", borderRadius: 8 }}
+            style={{ backgroundColor: "#ecf5efff", borderRadius: 8 }}
             className="base"
             width="64"
             height="48"
             alt=""
           />{" "}
-          <div
+          <Title
             style={{
               marginLeft: 8,
               fontSize: 18,
             }}
           >
             FSM Piano
-          </div>
-        </Title>
+          </Title>
+        </div>
         <Button
           icon={<UnorderedListOutlined />}
           onClick={() => navigate("/musicas")}
@@ -409,94 +398,152 @@ const PianoSequencer = () => {
         </Button>
       </div>
 
-      <Card
+      <div style={{ display: "flex", flexWrap: "wrap" }}>
+        <Button
+          style={{ width: 148, marginRight: 16, marginTop: 8 }}
+          type="primary"
+          onClick={() => setSequenceOpen(true)}
+        >
+          Ver notas
+        </Button>
+        <Button
+          style={{ width: 148, marginRight: 16, marginTop: 8 }}
+          onClick={() =>
+            Modal.confirm({
+              title: "Limpar toda a sequência?",
+              zIndex: 2,
+              content:
+                "Essa ação não pode ser desfeita. Todas as notas adicionadas serão removidas.",
+              okText: "Sim, limpar",
+              okButtonProps: { danger: true },
+              cancelText: "Cancelar",
+              onOk: () => {
+                setEntries([]);
+                message.success("Sequência limpa", MESSAGE_DEFAULT_TIME);
+              },
+            })
+          }
+          danger
+          disabled={entries.length === 0}
+        >
+          Limpar tudo
+        </Button>
+        <ButtonTocarMusica
+          style={{ width: 148, marginRight: 16, marginTop: 8 }}
+          entries={entries}
+        />
+        <Button
+          style={{ width: 148, marginTop: 8 }}
+          type="primary"
+          icon={<SaveOutlined />}
+          onClick={() => setSaveOpen(true)}
+          disabled={entries.length === 0}
+        >
+          Salvar Música
+        </Button>
+      </div>
+      <Modal
+        style={{ maxWidth: 640 }}
+        zIndex={1}
+        width={"90%"}
         title={`Sequência (${entries.length} itens)`}
-        extra={
-          <Space>
-            <Button
-              onClick={() =>
-                Modal.confirm({
-                  title: "Limpar toda a sequência?",
-                  content:
-                    "Essa ação não pode ser desfeita. Todas as notas adicionadas serão removidas.",
-                  okText: "Sim, limpar",
-                  okButtonProps: { danger: true },
-                  cancelText: "Cancelar",
-                  onOk: () => {
-                    setEntries([]);
-                    message.success("Sequência limpa");
-                  },
-                })
-              }
-              danger
-              disabled={entries.length === 0}
-            >
-              Limpar tudo
-            </Button>
-            <Button
-              disabled={entries.length === 0}
-              onClick={() => {
-                tocarMusica(entries);
+        open={sequenceOpen}
+        onCancel={() => setSequenceOpen(false)}
+        footer={null}
+      >
+        <Card
+          title={
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                padding: 8,
               }}
             >
-              ▶ Tocar Música
-            </Button>
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={() => setSaveOpen(true)}
-              disabled={entries.length === 0}
-            >
-              Salvar Música
-            </Button>
-          </Space>
-        }
-      >
-        {entries.length === 0 ? (
-          <div style={{ height: 184, overflowY: "auto" }}>
-            <Text type="secondary">Nenhuma nota adicionada ainda.</Text>
-          </div>
-        ) : (
-          <div style={{ height: 184, overflowY: "auto" }}>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={entries.map((e) => e.__id)}
-                strategy={verticalListSortingStrategy}
+              <ButtonTocarMusica
+                style={{ width: "100%", marginBottom: 8 }}
+                entries={entries}
+              />
+              <Button
+                style={{ width: "100%" }}
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={() => setSaveOpen(true)}
+                disabled={entries.length === 0}
               >
-                <List
-                  dataSource={entries}
-                  rowKey={(item) => item.__id}
-                  renderItem={(entry, index) => (
-                    <SortableRow
-                      id={entry.__id}
-                      entry={entry}
-                      index={index}
-                      total={entries.length}
-                      onMoveUp={() => moveEntry(index, -1)}
-                      onMoveDown={() => moveEntry(index, 1)}
-                      onDuplicate={() => duplicateEntry(index)}
-                      onEdit={() => openEdit(index)}
-                      onRemove={() => removeEntry(index)}
-                      isSharp={isSharp}
-                    />
-                  )}
-                />
-              </SortableContext>
-            </DndContext>
-          </div>
-        )}
-      </Card>
+                Salvar Música
+              </Button>
+              <Button
+                style={{ width: "100%", marginTop: 8 }}
+                onClick={() =>
+                  Modal.confirm({
+                    title: "Limpar toda a sequência?",
+                    zIndex: 2,
+                    content:
+                      "Essa ação não pode ser desfeita. Todas as notas adicionadas serão removidas.",
+                    okText: "Sim, limpar",
+                    okButtonProps: { danger: true },
+                    cancelText: "Cancelar",
+                    onOk: () => {
+                      setEntries([]);
+                      message.success("Sequência limpa", MESSAGE_DEFAULT_TIME);
+                    },
+                  })
+                }
+                danger
+                disabled={entries.length === 0}
+              >
+                Limpar tudo
+              </Button>
+            </div>
+          }
+        >
+          {entries.length === 0 ? (
+            <div style={{ height: 360, overflowY: "auto" }}>
+              <Text type="secondary">Nenhuma nota adicionada ainda.</Text>
+            </div>
+          ) : (
+            <div style={{ height: 360, overflowY: "auto" }}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={entries.map((e) => e.__id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <List
+                    dataSource={entries}
+                    rowKey={(item) => item.__id}
+                    renderItem={(entry, index) => (
+                      <SortableRow
+                        id={entry.__id}
+                        entry={entry}
+                        index={index}
+                        total={entries.length}
+                        onMoveUp={() => moveEntry(index, -1)}
+                        onMoveDown={() => moveEntry(index, 1)}
+                        onDuplicate={() => duplicateEntry(index)}
+                        onEdit={() => openEdit(index)}
+                        onRemove={() => removeEntry(index)}
+                        isSharp={isSharp}
+                      />
+                    )}
+                  />
+                </SortableContext>
+              </DndContext>
+            </div>
+          )}
+        </Card>
+      </Modal>
 
       <Card title="Acordes Rápidos" style={{ marginTop: 24, marginBottom: 24 }}>
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
           <div>
-            <Text strong>Oitava:</Text>
             <Select
-              style={{ width: 120, display: "block", marginTop: 4 }}
+              style={{ width: "100%", marginTop: 4 }}
               value={oitavaAcorde}
               onChange={setOitavaAcorde}
               options={OITAVAS.map((o) => ({ label: `Oitava ${o}`, value: o }))}
@@ -515,12 +562,28 @@ const PianoSequencer = () => {
         </Space>
       </Card>
 
-      <Card title="Adicionar Nota / Acorde" style={{ marginBottom: 24 }}>
+      <Card
+        title={
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ width: "50%", marginRight: 8 }}>
+              Adicionar Nota / Acorde
+            </div>
+            <Button
+              style={{ width: "50%" }}
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={addEntry}
+            >
+              Adicionar
+            </Button>
+          </div>
+        }
+        style={{ marginBottom: 24 }}
+      >
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
           <div>
-            <Text strong>Oitava:</Text>
             <Select
-              style={{ width: 100, display: "block", marginTop: 4 }}
+              style={{ width: "100%", marginTop: 4 }}
               value={oitava}
               onChange={setOitava}
               options={OITAVAS.map((o) => ({ label: `Oitava ${o}`, value: o }))}
@@ -528,7 +591,6 @@ const PianoSequencer = () => {
           </div>
 
           <div>
-            <Text strong>Notas naturais:</Text>
             <div style={{ marginTop: 8 }}>
               <Space wrap>
                 {NOTAS_NATURAIS.map((n) => (
@@ -546,8 +608,7 @@ const PianoSequencer = () => {
           </div>
 
           <div>
-            <Text strong>Sustenidos:</Text>
-            <div style={{ marginTop: 8 }}>
+            <div style={{ marginTop: 4 }}>
               <Space wrap>
                 {NOTAS_SUSTENIDOS.map((n) => (
                   <Button
@@ -566,7 +627,6 @@ const PianoSequencer = () => {
 
           {selectedNotas.length > 0 && (
             <div>
-              <Text strong>Selecionadas:</Text>
               <div style={{ marginTop: 8 }}>
                 <Space wrap>
                   {selectedNotas.map((n) => (
@@ -590,7 +650,7 @@ const PianoSequencer = () => {
           )}
 
           <Space wrap>
-            <div>
+            <div style={{ width: 160 }}>
               <Text strong>Duração da nota:</Text>
               <InputNumber
                 min={0.1}
@@ -601,7 +661,7 @@ const PianoSequencer = () => {
                 style={{ display: "block", marginTop: 4 }}
               />
             </div>
-            <div>
+            <div style={{ width: 160 }}>
               <Text strong>Tempo entre notas (ms):</Text>
               <InputNumber
                 min={0}
@@ -615,14 +675,12 @@ const PianoSequencer = () => {
               />
             </div>
           </Space>
-          <Button type="primary" icon={<PlusOutlined />} onClick={addEntry}>
-            Adicionar
-          </Button>
         </Space>
       </Card>
 
       <Modal
         title="Salvar Música"
+        zIndex={2}
         open={saveOpen}
         onCancel={() => setSaveOpen(false)}
         onOk={handleSave}
@@ -643,6 +701,7 @@ const PianoSequencer = () => {
 
       <Modal
         title="Editar Nota"
+        zIndex={2}
         open={editIndex !== null}
         onCancel={() => setEditIndex(null)}
         onOk={saveEdit}

@@ -118,7 +118,7 @@ All colors MUST be HSL.
   .responsive-page-header {
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 12px;
+    gap: 6px;
   }
   .responsive-page-header > * {
     width: 100%;

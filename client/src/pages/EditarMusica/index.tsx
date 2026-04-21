@@ -18,8 +18,6 @@ import {
   PlusOutlined,
   DeleteOutlined,
   CopyOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
   EditOutlined,
   SaveOutlined,
   ArrowLeftOutlined,
@@ -75,9 +73,6 @@ const SortableRow = ({
   id,
   entry,
   index,
-  total,
-  onMoveUp,
-  onMoveDown,
   onDuplicate,
   onEdit,
   onRemove,
@@ -103,24 +98,11 @@ const SortableRow = ({
       <List.Item
         actions={[
           <Button
-            key="up"
-            size="small"
-            icon={<ArrowUpOutlined />}
-            disabled={index === 0}
-            onClick={onMoveUp}
-          />,
-          <Button
-            key="down"
-            size="small"
-            icon={<ArrowDownOutlined />}
-            disabled={index === total - 1}
-            onClick={onMoveDown}
-          />,
-          <Button
             key="copy"
             size="small"
             icon={<CopyOutlined />}
             onClick={onDuplicate}
+            title="Duplicar nota"
           />,
           <Button
             key="edit"
@@ -190,6 +172,8 @@ const EditarMusica = () => {
   const [editDuracao, setEditDuracao] = useState<number>(1);
   const [editTempo, setEditTempo] = useState<number>(200);
 
+  const MESSAGE_DEFAULT_TIME = 2;
+
   const {
     data: getOneMusicData,
     isSuccess: isSuccessGetOneMusic,
@@ -216,7 +200,7 @@ const EditarMusica = () => {
 
   useEffect(() => {
     if (isErrorGetOneMusic) {
-      message.error("Música não encontrada");
+      message.error("Música não encontrada", MESSAGE_DEFAULT_TIME);
       navigate("/musicas");
     }
   }, [isErrorGetOneMusic, navigate]);
@@ -240,7 +224,10 @@ const EditarMusica = () => {
   const saveEdit = () => {
     if (editIndex === null) return;
     if (editNotas.length === 0)
-      return message.warning("Selecione pelo menos uma nota!");
+      return message.warning(
+        "Selecione pelo menos uma nota!",
+        MESSAGE_DEFAULT_TIME,
+      );
     const copy = [...entries];
     copy[editIndex] = {
       ...copy[editIndex],
@@ -254,13 +241,16 @@ const EditarMusica = () => {
 
   const addEntry = () => {
     if (selectedNotas.length === 0)
-      return message.warning("Selecione pelo menos uma nota!");
+      return message.warning(
+        "Selecione pelo menos uma nota!",
+        MESSAGE_DEFAULT_TIME,
+      );
     setEntries([
       ...entries,
       withId({ notas: [...selectedNotas], duracaoNotas, tempoEntreNotas }),
     ]);
 
-    message.success("Nota ou acorde adicionado!");
+    message.success("Nota ou acorde adicionado!", MESSAGE_DEFAULT_TIME);
 
     setSelectedNotas([]);
   };
@@ -287,7 +277,7 @@ const EditarMusica = () => {
       ...entries,
       withId({ notas: transposed, duracaoNotas, tempoEntreNotas }),
     ]);
-    message.success("Acorde adicionado!");
+    message.success("Acorde adicionado!", MESSAGE_DEFAULT_TIME);
   };
 
   const removeEntry = (i: number) =>
@@ -316,7 +306,8 @@ const EditarMusica = () => {
 
   const handleSave = async () => {
     if (!id) return;
-    if (!name.trim()) return message.warning("Informe um nome!");
+    if (!name.trim())
+      return message.warning("Informe um nome!", MESSAGE_DEFAULT_TIME);
 
     mutateUpdateMusic({ name: name.trim(), sequence: entries });
   };
@@ -325,14 +316,14 @@ const EditarMusica = () => {
 
   useEffect(() => {
     if (isSuccessUpdateMusic) {
-      message.success("Música atualizada!");
+      message.success("Música atualizada!", MESSAGE_DEFAULT_TIME);
       navigate("/musicas");
     }
   }, [isSuccessUpdateMusic, navigate]);
 
   useEffect(() => {
     if (isErrorUpdateMusic) {
-      message.error("Erro ao atualizar.");
+      message.error("Erro ao atualizar.", MESSAGE_DEFAULT_TIME);
     }
   }, [isErrorUpdateMusic]);
 
@@ -457,9 +448,8 @@ const EditarMusica = () => {
         <Card title="Acordes Rápidos" style={{ marginBottom: 24 }}>
           <Space direction="vertical" size="middle" style={{ width: "100%" }}>
             <div>
-              <Text strong>Oitava:</Text>
               <Select
-                style={{ width: 120, display: "block", marginTop: 4 }}
+                style={{ width: "100%", marginTop: 4 }}
                 value={oitavaAcorde}
                 onChange={setOitavaAcorde}
                 options={OITAVAS.map((o) => ({
@@ -481,12 +471,32 @@ const EditarMusica = () => {
           </Space>
         </Card>
 
-        <Card title="Adicionar Nota / Acorde" style={{ marginBottom: 24 }}>
+        <Card
+          title={
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+              }}
+            >
+              <div>Adicionar Nota / Acorde</div>
+              <Button
+                style={{ width: "50%" }}
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={addEntry}
+              >
+                Adicionar
+              </Button>
+            </div>
+          }
+          style={{ marginBottom: 24 }}
+        >
           <Space direction="vertical" size="middle" style={{ width: "100%" }}>
             <div>
-              <Text strong>Oitava:</Text>
               <Select
-                style={{ width: 100, display: "block", marginTop: 4 }}
+                style={{ width: "100%", marginTop: 4 }}
                 value={oitava}
                 onChange={setOitava}
                 options={OITAVAS.map((o) => ({
@@ -497,7 +507,6 @@ const EditarMusica = () => {
             </div>
 
             <div>
-              <Text strong>Notas naturais:</Text>
               <div style={{ marginTop: 8 }}>
                 <Space wrap>
                   {NOTAS_NATURAIS.map((n) => (
@@ -515,8 +524,7 @@ const EditarMusica = () => {
             </div>
 
             <div>
-              <Text strong>Sustenidos:</Text>
-              <div style={{ marginTop: 8 }}>
+              <div style={{ marginTop: 4 }}>
                 <Space wrap>
                   {NOTAS_SUSTENIDOS.map((n) => (
                     <Button
@@ -535,7 +543,6 @@ const EditarMusica = () => {
 
             {selectedNotas.length > 0 && (
               <div>
-                <Text strong>Selecionadas:</Text>
                 <div style={{ marginTop: 8 }}>
                   <Space wrap>
                     {selectedNotas.map((n) => (
@@ -584,9 +591,6 @@ const EditarMusica = () => {
                 />
               </div>
             </Space>
-            <Button type="primary" icon={<PlusOutlined />} onClick={addEntry}>
-              Adicionar
-            </Button>
           </Space>
         </Card>
 

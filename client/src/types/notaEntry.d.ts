@@ -7,9 +7,12 @@ declare global {
     duracaoNotas: number;
   }
 
+  
   interface Music {
     _id: string;
     name: string;
     sequence: NotaEntry[];
   }
+  
+  type EntryWithId = NotaEntry & { __id: string };
 }
