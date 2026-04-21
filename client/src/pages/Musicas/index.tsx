@@ -36,6 +36,8 @@ const Musicas = () => {
     refetch: refetchGetMusics,
   } = useGetMusics();
 
+  const MESSAGE_DEFAULT_TIME = 2;
+
   const { mutate: mutateDeleteMusic, isSuccess: isSuccessDeleteMusic } =
     useDeleteMusic();
 
@@ -49,13 +51,16 @@ const Musicas = () => {
       "selectedMusic",
       JSON.stringify({ name: m.name, sequence: m.sequence }),
     );
-    message.success(`"${m.name}" carregada no sequenciador!`);
+    message.success(
+      `"${m.name}" carregada no sequenciador!`,
+      MESSAGE_DEFAULT_TIME,
+    );
     navigate("/");
   };
 
   useEffect(() => {
-    console.log(isSuccessGetMusics)
-    console.log(getMusicsData)
+    console.log(isSuccessGetMusics);
+    console.log(getMusicsData);
     if (isSuccessGetMusics && getMusicsData) {
       setMusics(() => getMusicsData);
     }
@@ -71,13 +76,13 @@ const Musicas = () => {
 
   useEffect(() => {
     if (isErrorGetMusics) {
-      message.error("Erro ao carregar músicas.");
+      message.error("Erro ao carregar músicas.", MESSAGE_DEFAULT_TIME);
     }
   }, [isErrorGetMusics]);
 
   useEffect(() => {
     if (isSuccessDeleteMusic) {
-      message.success("Música removida!");
+      message.success("Música removida!", MESSAGE_DEFAULT_TIME);
       refetchGetMusics();
     }
   }, [isSuccessDeleteMusic, refetchGetMusics]);
