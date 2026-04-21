@@ -259,6 +259,9 @@ const EditarMusica = () => {
       ...entries,
       withId({ notas: [...selectedNotas], duracaoNotas, tempoEntreNotas }),
     ]);
+
+    message.success("Nota ou acorde adicionado!");
+
     setSelectedNotas([]);
   };
 
@@ -387,6 +390,68 @@ const EditarMusica = () => {
 
         <Card title="Nome" style={{ marginBottom: 24 }}>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
+        </Card>
+
+        <Card
+          title={`Sequência (${entries.length} itens)`}
+          extra={
+            <Space>
+              <Button
+                disabled={entries.length === 0}
+                onClick={() => {
+                  tocarMusica(entries);
+                }}
+              >
+                ▶ Tocar Música
+              </Button>
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={handleSave}
+                loading={saving}
+              >
+                Salvar Alterações
+              </Button>
+            </Space>
+          }
+        >
+          {entries.length === 0 ? (
+            <div style={{ height: 184, overflowY: "auto" }}>
+              <Text type="secondary">Nenhuma nota.</Text>
+            </div>
+          ) : (
+            <div style={{ height: 184, overflowY: "auto" }}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={entries.map((e) => e.__id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <List
+                    dataSource={entries}
+                    rowKey={(item) => item.__id}
+                    renderItem={(entry, index) => (
+                      <SortableRow
+                        id={entry.__id}
+                        entry={entry}
+                        index={index}
+                        total={entries.length}
+                        onMoveUp={() => moveEntry(index, -1)}
+                        onMoveDown={() => moveEntry(index, 1)}
+                        onDuplicate={() => duplicateEntry(index)}
+                        onEdit={() => openEdit(index)}
+                        onRemove={() => removeEntry(index)}
+                        isSharp={isSharp}
+                      />
+                    )}
+                  />
+                </SortableContext>
+              </DndContext>
+            </div>
+          )}
         </Card>
 
         <Card title="Acordes Rápidos" style={{ marginBottom: 24 }}>
@@ -523,64 +588,6 @@ const EditarMusica = () => {
               Adicionar
             </Button>
           </Space>
-        </Card>
-
-        <Card
-          title={`Sequência (${entries.length} itens)`}
-          extra={
-            <Space>
-              <Button
-                disabled={entries.length === 0}
-                onClick={() => {
-                  tocarMusica(entries);
-                }}
-              >
-                ▶ Tocar Música
-              </Button>
-              <Button
-                type="primary"
-                icon={<SaveOutlined />}
-                onClick={handleSave}
-                loading={saving}
-              >
-                Salvar Alterações
-              </Button>
-            </Space>
-          }
-        >
-          {entries.length === 0 ? (
-            <Text type="secondary">Nenhuma nota.</Text>
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={entries.map((e) => e.__id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <List
-                  dataSource={entries}
-                  rowKey={(item) => item.__id}
-                  renderItem={(entry, index) => (
-                    <SortableRow
-                      id={entry.__id}
-                      entry={entry}
-                      index={index}
-                      total={entries.length}
-                      onMoveUp={() => moveEntry(index, -1)}
-                      onMoveDown={() => moveEntry(index, 1)}
-                      onDuplicate={() => duplicateEntry(index)}
-                      onEdit={() => openEdit(index)}
-                      onRemove={() => removeEntry(index)}
-                      isSharp={isSharp}
-                    />
-                  )}
-                />
-              </SortableContext>
-            </DndContext>
-          )}
         </Card>
 
         <Modal

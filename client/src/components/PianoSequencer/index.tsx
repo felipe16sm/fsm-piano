@@ -242,10 +242,14 @@ const PianoSequencer = () => {
       message.warning("Selecione pelo menos uma nota!");
       return;
     }
+
     setEntries([
       ...entries,
       withId({ notas: [...selectedNotas], duracaoNotas, tempoEntreNotas }),
     ]);
+
+    message.success("Nota ou acorde adicionado!");
+
     setSelectedNotas([]);
   };
 
@@ -368,7 +372,7 @@ const PianoSequencer = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 32,
+          marginBottom: 16,
         }}
       >
         <Title
@@ -377,20 +381,21 @@ const PianoSequencer = () => {
             display: "flex",
             alignItems: "center",
             textAlign: "center",
-            marginBottom: 32,
+            marginBottom: 16,
           }}
         >
           <img
             src={FSMImg}
             style={{ backgroundColor: "#e2e9e6ff", borderRadius: 8 }}
             className="base"
-            width="100"
-            height="80"
+            width="64"
+            height="48"
             alt=""
           />{" "}
           <div
             style={{
-              width: 160,
+              marginLeft: 8,
+              fontSize: 18,
             }}
           >
             FSM Piano
@@ -448,9 +453,11 @@ const PianoSequencer = () => {
         }
       >
         {entries.length === 0 ? (
-          <Text type="secondary">Nenhuma nota adicionada ainda.</Text>
+          <div style={{ height: 184, overflowY: "auto" }}>
+            <Text type="secondary">Nenhuma nota adicionada ainda.</Text>
+          </div>
         ) : (
-          <div style={{ maxHeight: 264, overflowY: "auto" }}>
+          <div style={{ height: 184, overflowY: "auto" }}>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
