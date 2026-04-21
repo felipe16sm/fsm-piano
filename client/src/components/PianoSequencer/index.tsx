@@ -363,6 +363,7 @@ const PianoSequencer = () => {
   return (
     <div style={{ maxWidth: 800, margin: "0 auto" }}>
       <div
+        className="responsive-page-header"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -403,7 +404,87 @@ const PianoSequencer = () => {
         </Button>
       </div>
 
-      <Card title="Acordes Rápidos" style={{ marginBottom: 24 }}>
+      <Card
+        title={`Sequência (${entries.length} itens)`}
+        extra={
+          <Space>
+            <Button
+              onClick={() =>
+                Modal.confirm({
+                  title: "Limpar toda a sequência?",
+                  content:
+                    "Essa ação não pode ser desfeita. Todas as notas adicionadas serão removidas.",
+                  okText: "Sim, limpar",
+                  okButtonProps: { danger: true },
+                  cancelText: "Cancelar",
+                  onOk: () => {
+                    setEntries([]);
+                    message.success("Sequência limpa");
+                  },
+                })
+              }
+              danger
+              disabled={entries.length === 0}
+            >
+              Limpar tudo
+            </Button>
+            <Button
+              disabled={entries.length === 0}
+              onClick={() => {
+                tocarMusica(entries);
+              }}
+            >
+              ▶ Tocar Música
+            </Button>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={() => setSaveOpen(true)}
+              disabled={entries.length === 0}
+            >
+              Salvar Música
+            </Button>
+          </Space>
+        }
+      >
+        {entries.length === 0 ? (
+          <Text type="secondary">Nenhuma nota adicionada ainda.</Text>
+        ) : (
+          <div style={{ maxHeight: 264, overflowY: "auto" }}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={entries.map((e) => e.__id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <List
+                  dataSource={entries}
+                  rowKey={(item) => item.__id}
+                  renderItem={(entry, index) => (
+                    <SortableRow
+                      id={entry.__id}
+                      entry={entry}
+                      index={index}
+                      total={entries.length}
+                      onMoveUp={() => moveEntry(index, -1)}
+                      onMoveDown={() => moveEntry(index, 1)}
+                      onDuplicate={() => duplicateEntry(index)}
+                      onEdit={() => openEdit(index)}
+                      onRemove={() => removeEntry(index)}
+                      isSharp={isSharp}
+                    />
+                  )}
+                />
+              </SortableContext>
+            </DndContext>
+          </div>
+        )}
+      </Card>
+
+      <Card title="Acordes Rápidos" style={{ marginTop: 24, marginBottom: 24 }}>
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
           <div>
             <Text strong>Oitava:</Text>
@@ -531,84 +612,6 @@ const PianoSequencer = () => {
             Adicionar
           </Button>
         </Space>
-      </Card>
-
-      <Card
-        title={`Sequência (${entries.length} itens)`}
-        extra={
-          <Space>
-            <Button
-              onClick={() =>
-                Modal.confirm({
-                  title: "Limpar toda a sequência?",
-                  content:
-                    "Essa ação não pode ser desfeita. Todas as notas adicionadas serão removidas.",
-                  okText: "Sim, limpar",
-                  okButtonProps: { danger: true },
-                  cancelText: "Cancelar",
-                  onOk: () => {
-                    setEntries([]);
-                    message.success("Sequência limpa");
-                  },
-                })
-              }
-              danger
-              disabled={entries.length === 0}
-            >
-              Limpar tudo
-            </Button>
-            <Button
-              disabled={entries.length === 0}
-              onClick={() => {
-                tocarMusica(entries);
-              }}
-            >
-              ▶ Tocar Música
-            </Button>
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={() => setSaveOpen(true)}
-              disabled={entries.length === 0}
-            >
-              Salvar Música
-            </Button>
-          </Space>
-        }
-      >
-        {entries.length === 0 ? (
-          <Text type="secondary">Nenhuma nota adicionada ainda.</Text>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={entries.map((e) => e.__id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <List
-                dataSource={entries}
-                rowKey={(item) => item.__id}
-                renderItem={(entry, index) => (
-                  <SortableRow
-                    id={entry.__id}
-                    entry={entry}
-                    index={index}
-                    total={entries.length}
-                    onMoveUp={() => moveEntry(index, -1)}
-                    onMoveDown={() => moveEntry(index, 1)}
-                    onDuplicate={() => duplicateEntry(index)}
-                    onEdit={() => openEdit(index)}
-                    onRemove={() => removeEntry(index)}
-                    isSharp={isSharp}
-                  />
-                )}
-              />
-            </SortableContext>
-          </DndContext>
-        )}
       </Card>
 
       <Modal

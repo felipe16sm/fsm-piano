@@ -83,7 +83,7 @@ const Musicas = () => {
   }, [isSuccessDeleteMusic, refetchGetMusics]);
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-background p-6 responsive-page">
       <div style={{ maxWidth: 800, margin: "0 auto" }}>
         <div
           style={{
